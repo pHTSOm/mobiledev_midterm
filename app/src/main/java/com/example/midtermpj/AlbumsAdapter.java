@@ -5,10 +5,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -37,6 +40,9 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String albumName = albums.get(position);
         holder.albumNameTextView.setText(albumName);
+
+        holder.galleryImageView.setImageResource(R.drawable.photos_gallery);
+
         holder.itemView.setOnClickListener(v -> listener.onAlbumClick(albumName));
     }
 
@@ -46,11 +52,12 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-
+        ImageView galleryImageView;
         TextView albumNameTextView;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            galleryImageView = itemView.findViewById(R.id.galleryImageView);
             albumNameTextView = itemView.findViewById(R.id.albumNameTextView);
         }
     }

@@ -17,6 +17,7 @@
         android:layout_height="wrap_content"
         android:text="Create Album" />
 
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/albumsRecyclerView"
         android:layout_width="match_parent"

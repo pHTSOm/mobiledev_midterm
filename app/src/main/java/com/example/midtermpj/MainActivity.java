@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        albumsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 4));
         albumsRecyclerView.setAdapter(albumsAdapter);
 
         // Add click listener to Create Album button
