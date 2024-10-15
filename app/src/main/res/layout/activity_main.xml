@@ -5,37 +5,52 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:orientation="vertical">
 
-    <Button
-        android:id="@+id/addBtn"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="+"
-        android:textSize="45sp"
-        android:layout_gravity="end"
-        android:layout_marginTop="5dp"/>
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/backBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="5dp"
+            android:layout_weight="1"
+            android:layout_marginRight="130dp"
+            android:background="@drawable/backbtn"
+            android:textSize="45sp" />
+
+        <Button
+            android:id="@+id/addBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="5dp"
+            android:layout_weight="1"
+            android:layout_marginLeft="130dp"
+            android:text="+"
+            android:textSize="45sp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/totalPhotos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
+        android:textColor="@color/black"
         android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"/>
+        android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/myRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="5dp"
         android:scrollbarStyle="outsideInset"
-        android:scrollbars="vertical"
-        android:layout_marginTop="5dp"/>
-
-
-
-
+        android:scrollbars="vertical" />
 
 </LinearLayout>

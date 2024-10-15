@@ -1,96 +1,120 @@
 package com.example.midtermpj;
 
-import android.Manifest;
+
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
-
-    private static final int Read_Permission = 101;
-    private static final int PICK_IMAGE = 1;
-    RecyclerView recyclerView;
-    TextView textView;
-    Button addBtn;
-    ArrayList<Uri> uri = new ArrayList<>();
-    RecyclerAdapter adapter;
+public class MainActivity extends AppCompatActivity{
+    EditText albumNameEditText;
+    Button createAlbumBtn;
+    RecyclerView albumsRecyclerView;
+    AlbumsAdapter albumsAdapter;
+    ArrayList<String> albums = new ArrayList<>();
+    DatabaseReference albumRef; // Firebase reference
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.gallery);
 
-        textView = findViewById(R.id.totalPhotos);
-        recyclerView = findViewById(R.id.myRecyclerView);
-        addBtn = findViewById(R.id.addBtn);
+        albumNameEditText = findViewById(R.id.albumNameEditText);
+        createAlbumBtn = findViewById(R.id.createAlbumBtn);
+        albumsRecyclerView = findViewById(R.id.albumsRecyclerView);
 
-        adapter = new RecyclerAdapter(uri,getApplicationContext());
+        // Firebase Database reference
+        albumRef = FirebaseDatabase.getInstance().getReference("albums");
 
-        recyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
-        recyclerView.setAdapter(adapter);
-
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Read_Permission);
-
-        }
-
-        addBtn.setOnClickListener(new View.OnClickListener() {
+        // Initialize RecyclerView with AlbumsAdapter
+        albumsAdapter = new AlbumsAdapter(albums, new AlbumsAdapter.OnAlbumClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onAlbumClick(String albumName) {
+                // Navigate to AddImage activity when album is clicked
+                Intent intent = new Intent(MainActivity.this, AddImage.class);
+                intent.putExtra("ALBUM_NAME", albumName);
+                startActivity(intent);
+            }
+        });
 
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+        albumsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        albumsRecyclerView.setAdapter(albumsAdapter);
+
+        // Add click listener to Create Album button
+        createAlbumBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("MainActivity", "Create album button clicked");
+                String albumName = albumNameEditText.getText().toString();
+                if (!albumName.isEmpty()) {
+                    // Add album to Firebase
+                    addAlbumToFirebase(albumName);
+
+                    // Clear the EditText field
+                    albumNameEditText.setText("");
+                } else {
+                    Toast.makeText(MainActivity.this, "Enter album name", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Load albums from Firebase
+        loadAlbumsFromFirebase();
+    }
+
+    private void addAlbumToFirebase(String albumName) {
+        albumRef.child(albumName).setValue(true).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d("MainActivity", "Album successfully created in Firebase");
+                albums.add(albumName);
+                albumsAdapter.notifyDataSetChanged();
+                Toast.makeText(MainActivity.this, "Album created", Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(MainActivity.this, AddImage.class);
+                intent.putExtra("ALBUM_NAME", albumName); // Pass the album name if needed
+                startActivity(intent); // Start AddImage activity
+            } else {
+                Log.d("MainActivity", "Failed to create album in Firebase");
+                Toast.makeText(MainActivity.this, "Failed to create album", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && null != data) {
-            if (data.getClipData() != null) {
-
-                //get multiple images
-                int countImages = data.getClipData().getItemCount();
-
-                for (int i = 0; i < countImages; i++) {
-                    Uri uriImage = data.getClipData().getItemAt(i).getUri();
-                    uri.add(uriImage);  // Add image URI to the list
+    private void loadAlbumsFromFirebase() {
+        albumRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                albums.clear(); // Clear the list before adding new items
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String albumName = snapshot.getKey();
+                    if (albumName != null) {
+                        albums.add(albumName);
+                    }
                 }
-
-                //notify adapter
-                adapter.notifyDataSetChanged();
-                textView.setText("Photos(" + uri.size() + ")");
-            } else {
-                // get single image
-                Uri imageUri = data.getData();
-                //add code to arraylist
-                uri.add(imageUri);
+                albumsAdapter.notifyDataSetChanged();
             }
-            adapter.notifyDataSetChanged();
-            textView.setText("Photos(" + uri.size() + ")");
-        } else {
-            Toast.makeText(this, "You haven't pick any image", Toast.LENGTH_LONG).show();
-        }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(MainActivity.this, "Failed to load albums", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
