@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "280876496481",
+    "project_id": "mobilemidtermpj",
+    "storage_bucket": "mobilemidtermpj.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:280876496481:android:1c5190e6c0023637275c20",
+        "android_client_info": {
+          "package_name": "com.example.midtermpj"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx0fb-cl917FbzmtFqiEr13_v4xYsiwug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
