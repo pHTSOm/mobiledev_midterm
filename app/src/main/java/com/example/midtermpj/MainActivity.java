@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
 
-        albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 4));
+        albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
         albumsRecyclerView.setAdapter(albumsAdapter);
 
         // Add click listener to Create Album button

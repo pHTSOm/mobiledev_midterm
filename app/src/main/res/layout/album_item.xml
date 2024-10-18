@@ -10,13 +10,26 @@
         android:scaleType="fitCenter"
         android:contentDescription="Album image"/>
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
     <TextView
         android:id="@+id/albumNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:padding="16dp"
+        android:padding="10dp"
         android:text="Album Name"
         android:textSize="18sp"
         android:layout_marginTop="8dp" />
+    <ImageView
+        android:id="@+id/renameIcon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/rename_ic"
+        android:contentDescription="Rename Album" />
+    </LinearLayout>
 </LinearLayout>
