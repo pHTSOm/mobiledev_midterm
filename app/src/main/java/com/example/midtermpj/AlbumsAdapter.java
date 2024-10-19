@@ -29,14 +29,14 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
 
     private ArrayList<String> albums;
     private OnAlbumClickListener listener;
+    private OnDeleteClickListener onDeleteClickListener;
 
-    public interface OnAlbumClickListener {
-        void onAlbumClick(String albumName);
-    }
 
-    public AlbumsAdapter(ArrayList<String> albums, OnAlbumClickListener listener) {
+
+    public AlbumsAdapter(ArrayList<String> albums, OnAlbumClickListener listener, OnDeleteClickListener onDeleteClickListener) {
         this.albums = albums;
         this.listener = listener;
+        this.onDeleteClickListener = onDeleteClickListener;
     }
 
     @NonNull
@@ -59,6 +59,8 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
         holder.galleryImageView.setImageResource(R.drawable.photos_gallery);
 
         holder.itemView.setOnClickListener(v -> listener.onAlbumClick(albumName));
+
+        holder.deleteAlbum_ic.setOnClickListener(v -> onDeleteClickListener.onDeleteClick(albumName, position));
     }
 
     private void showRenameDialog(Context context, String oldAlbumName, int position) {
@@ -125,8 +127,6 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
 
 
 
-
-
     @Override
     public int getItemCount() {
         return albums.size();
@@ -136,12 +136,22 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
         ImageView galleryImageView;
         TextView albumNameTextView;
         ImageView renameIcon;
+        ImageView deleteAlbum_ic;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             galleryImageView = itemView.findViewById(R.id.galleryImageView);
             albumNameTextView = itemView.findViewById(R.id.albumNameTextView);
             renameIcon = itemView.findViewById(R.id.renameIcon);
+            deleteAlbum_ic = itemView.findViewById(R.id.deleteAlbum_ic);
         }
+    }
+
+    public interface OnAlbumClickListener {
+        void onAlbumClick(String albumName);
+    }
+
+    public interface OnDeleteClickListener {
+        void onDeleteClick(String albumName, int position);
     }
 }
