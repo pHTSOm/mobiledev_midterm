@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity{
     AlbumsAdapter albumsAdapter;
     ArrayList<String> albums = new ArrayList<>();
     DatabaseReference albumRef; // Firebase reference
+    boolean isListView= true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity{
         albumNameEditText = findViewById(R.id.albumNameEditText);
         createAlbumBtn = findViewById(R.id.createAlbumBtn);
         albumsRecyclerView = findViewById(R.id.albumsRecyclerView);
+        Button switchButton = findViewById(R.id.switchButton);
 
         // Firebase Database reference
         albumRef = FirebaseDatabase.getInstance().getReference("albums");
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity{
 
         albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
         albumsRecyclerView.setAdapter(albumsAdapter);
-
+        setRecyclerViewLayoutManager(isListView);
         // Add click listener to Create Album button
         createAlbumBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -77,6 +79,25 @@ public class MainActivity extends AppCompatActivity{
 
         // Load albums from Firebase
         loadAlbumsFromFirebase();
+        switchButton.setOnClickListener(v -> {
+            isListView = !isListView; // toggle between list and grid
+            setRecyclerViewLayoutManager(isListView);
+
+            // Update button text
+            if (isListView) {
+                switchButton.setText("Grid");
+            } else {
+                switchButton.setText("List");
+            }
+        });
+    }
+
+    private void setRecyclerViewLayoutManager(boolean isListView) {
+        if (isListView){
+            albumsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        }else {
+            albumsRecyclerView.setLayoutManager(new GridLayoutManager(this,3));
+        }
     }
 
     private void addAlbumToFirebase(String albumName) {

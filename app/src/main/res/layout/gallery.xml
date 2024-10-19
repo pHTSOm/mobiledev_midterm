@@ -17,10 +17,20 @@
         android:layout_height="wrap_content"
         android:text="Create Album" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="37dp"
+        android:text="Switch"
+        android:id="@+id/switchButton"
+        android:background="@drawable/switch_button"
+        android:textAllCaps="false"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/albumsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="16dp"/>
+
+
 </LinearLayout>
