@@ -2,7 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:gravity="center">
+
+    <!-- Album Image -->
     <ImageView
         android:id="@+id/galleryImageView"
         android:layout_width="90dp"
@@ -10,26 +14,30 @@
         android:scaleType="fitCenter"
         android:contentDescription="Album image"/>
 
+    <!-- Horizontal Layout for Album Name and Rename Icon -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center">
 
-    <TextView
-        android:id="@+id/albumNameTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="10dp"
-        android:text="Album Name"
-        android:textSize="18sp"
-        android:layout_marginTop="8dp" />
-    <ImageView
-        android:id="@+id/renameIcon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:src="@drawable/rename_ic"
-        android:contentDescription="Rename Album" />
+        <!-- Album Name -->
+        <TextView
+            android:id="@+id/albumNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="Album Name"
+            android:textSize="18sp"
+            android:layout_marginTop="8dp" />
+
+        <!-- Rename Icon -->
+        <ImageView
+            android:id="@+id/renameIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/rename_ic"
+            android:contentDescription="Rename Album" />
     </LinearLayout>
 </LinearLayout>

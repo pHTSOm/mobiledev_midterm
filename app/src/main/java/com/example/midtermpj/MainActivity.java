@@ -4,9 +4,11 @@ package com.example.midtermpj;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +32,10 @@ public class MainActivity extends AppCompatActivity{
     AlbumsAdapter albumsAdapter;
     ArrayList<String> albums = new ArrayList<>();
     DatabaseReference albumRef; // Firebase reference
+    boolean isListView= true;
+    ScaleGestureDetector scaleGestureDetector;
+    float FACTOR = 1.0f;
+    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,7 @@ public class MainActivity extends AppCompatActivity{
         albumNameEditText = findViewById(R.id.albumNameEditText);
         createAlbumBtn = findViewById(R.id.createAlbumBtn);
         albumsRecyclerView = findViewById(R.id.albumsRecyclerView);
+        Button switchButton = findViewById(R.id.switchButton);
 
         // Firebase Database reference
         albumRef = FirebaseDatabase.getInstance().getReference("albums");
@@ -56,6 +63,7 @@ public class MainActivity extends AppCompatActivity{
 
         albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
         albumsRecyclerView.setAdapter(albumsAdapter);
+        setRecyclerViewLayoutManager(isListView);//defaul is listView
 
         // Add click listener to Create Album button
         createAlbumBtn.setOnClickListener(new View.OnClickListener() {
@@ -77,6 +85,25 @@ public class MainActivity extends AppCompatActivity{
 
         // Load albums from Firebase
         loadAlbumsFromFirebase();
+        switchButton.setOnClickListener(v -> {
+            isListView = !isListView; // toggle between list and grid
+            setRecyclerViewLayoutManager(isListView);
+
+            // Update button text
+            if (isListView) {
+                switchButton.setText("List");
+            } else {
+                switchButton.setText("Grid");
+            }
+        });
+    }
+
+    private void setRecyclerViewLayoutManager(boolean isListView) {
+        if (isListView){
+            albumsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        }else {
+            albumsRecyclerView.setLayoutManager(new GridLayoutManager(this,3));
+        }
     }
 
     private void addAlbumToFirebase(String albumName) {
