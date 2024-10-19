@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class AddImage extends AppCompatActivity implements  RecyclerAdapter.CountImageUpdate {
+public class AddImage extends AppCompatActivity implements  RecyclerAdapter.CountImageUpdate, RecyclerAdapter.DeleteImageListener {
     private static final int Read_Permission = 101;
     private static final int PICK_IMAGE = 1;
     RecyclerView recyclerView;
@@ -58,7 +58,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         addBtn = findViewById(R.id.addBtn);
         backBtn = findViewById(R.id.backBtn);
 
-        adapter = new RecyclerAdapter(uri,getApplicationContext(),this);
+        adapter = new RecyclerAdapter(uri,getApplicationContext(),this, this);
 
         recyclerView.setLayoutManager(new GridLayoutManager(AddImage.this, 3));
         recyclerView.setAdapter(adapter);
@@ -90,6 +90,9 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                 finish();
             }
         });
+
+
+
     }
 
     @Override
@@ -130,6 +133,12 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
     @Override
     public void clicked(int getSize) {
         textView.setText("Photos(" + uri.size() + ")");
+    }
+
+    @Override
+    public void onDeleteImage(String imageUrl) {
+        deleteImageFromGallery(imageUrl);
+        deleteImageReferenceFromDatabase(imageUrl);
     }
 
     private void uploadToFirebase() {
@@ -179,6 +188,61 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                     }
                 });
     }
+
+    private void deleteImageFromGallery(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            Toast.makeText(AddImage.this, "Invalid image URL", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl);
+            storageReference.delete()
+                    .addOnSuccessListener(aVoid -> {
+                        // Handle successful deletion
+                        Toast.makeText(AddImage.this, "Image deleted from storage", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        // Handle failure
+                        Toast.makeText(AddImage.this, "Failed to delete image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(AddImage.this, "Failed to parse the storage URI", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+    private void deleteImageReferenceFromDatabase(String imageUrl) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Query to find the document that matches the image URL
+        db.collection("albums").document(albumName).collection("images")
+                .whereEqualTo("url", imageUrl)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            // Delete the document that matches the URL
+                            document.getReference().delete()
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(AddImage.this, "Image reference deleted from database", Toast.LENGTH_SHORT).show();
+                                        // Now remove the image from your local list
+                                        uri.remove(Uri.parse(imageUrl));
+                                        adapter.notifyDataSetChanged();
+                                        textView.setText("Photos(" + uri.size() + ")");
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(AddImage.this, "Failed to delete image reference: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+                        }
+                    } else {
+                        Toast.makeText(AddImage.this, "Failed to find image reference in database", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+
 
     private void loadImagesFromDatabase() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
