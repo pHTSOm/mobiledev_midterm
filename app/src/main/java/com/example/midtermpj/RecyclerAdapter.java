@@ -18,13 +18,15 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     private ArrayList<Uri> uriArrayList;
     private Context context;
-    CountImageUpdate countImageUpdate;
+    private CountImageUpdate countImageUpdate;
+    private DeleteImageListener deleteImageListener;
 
 
-    public RecyclerAdapter(ArrayList<Uri> uri, Context context, CountImageUpdate countImageUpdate) {
+    public RecyclerAdapter(ArrayList<Uri> uri, Context context, CountImageUpdate countImageUpdate, DeleteImageListener deleteImageListener) {
         this.uriArrayList = uri;
         this.context = context;
         this.countImageUpdate = countImageUpdate;
+        this.deleteImageListener = deleteImageListener;
     }
 
     @NonNull
@@ -39,7 +41,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerAdapter.ViewHolder holder, int position) {
-//        holder.imageView.setImageURI(uriArrayList.get(position));
+        Uri imageUri = uriArrayList.get(position);
 
         Glide.with(context)
                 .load(uriArrayList.get(position))
@@ -52,10 +54,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             public void onClick(View view) {
                 int imagePosition = holder.getAdapterPosition();
                 if(imagePosition != RecyclerView.NO_POSITION){
+                    Uri imageUri = uriArrayList.get(imagePosition);
+
                     uriArrayList.remove(imagePosition);
                     notifyItemRemoved(imagePosition);
                     notifyItemRangeChanged(imagePosition, uriArrayList.size());
                     countImageUpdate.clicked(uriArrayList.size());
+                    deleteImageListener.onDeleteImage(imageUri.toString());
                 }
             }
         });
@@ -76,6 +81,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
             imageView = itemView.findViewById(R.id.image);
             delete = itemView.findViewById(R.id.delete);
         }
+    }
+
+    public interface  DeleteImageListener{
+        void onDeleteImage(String imageUrl);
     }
 
     public interface CountImageUpdate{
