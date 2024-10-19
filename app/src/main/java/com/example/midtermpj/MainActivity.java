@@ -4,9 +4,11 @@ package com.example.midtermpj;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,6 +33,9 @@ public class MainActivity extends AppCompatActivity{
     ArrayList<String> albums = new ArrayList<>();
     DatabaseReference albumRef; // Firebase reference
     boolean isListView= true;
+    ScaleGestureDetector scaleGestureDetector;
+    float FACTOR = 1.0f;
+    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +63,8 @@ public class MainActivity extends AppCompatActivity{
 
         albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
         albumsRecyclerView.setAdapter(albumsAdapter);
-        setRecyclerViewLayoutManager(isListView);
+        setRecyclerViewLayoutManager(isListView);//defaul is listView
+
         // Add click listener to Create Album button
         createAlbumBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,9 +91,9 @@ public class MainActivity extends AppCompatActivity{
 
             // Update button text
             if (isListView) {
-                switchButton.setText("Grid");
-            } else {
                 switchButton.setText("List");
+            } else {
+                switchButton.setText("Grid");
             }
         });
     }
