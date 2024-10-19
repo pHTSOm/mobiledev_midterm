@@ -59,6 +59,12 @@ public class MainActivity extends AppCompatActivity{
                 intent.putExtra("ALBUM_NAME", albumName);
                 startActivity(intent);
             }
+        }, new AlbumsAdapter.OnDeleteClickListener() {
+            @Override
+            public void onDeleteClick(String albumName, int position) {
+                // Call method to delete album
+                deleteAlbumFromFirebase(albumName, position);
+            }
         });
 
         albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
@@ -145,4 +151,18 @@ public class MainActivity extends AppCompatActivity{
             }
         });
     }
+
+        private void deleteAlbumFromFirebase(String albumName, int position) {
+            DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums");
+            albumRef.child(albumName).removeValue().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // Remove the album from the local list and notify the adapter
+                    albums.remove(position);
+                    albumsAdapter.notifyItemRemoved(position);
+                    Toast.makeText(MainActivity.this, "Album deleted", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Failed to delete album", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 }
