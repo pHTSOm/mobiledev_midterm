@@ -1,12 +1,14 @@
 package com.example.midtermpj;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
@@ -32,7 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class AddImage extends AppCompatActivity implements  RecyclerAdapter.CountImageUpdate, RecyclerAdapter.DeleteImageListener {
+public class AddImage extends AppCompatActivity implements  RecyclerAdapter.CountImageUpdate
+        , RecyclerAdapter.DeleteImageListener, RecyclerAdapter.itemClickListener {
     private static final int Read_Permission = 101;
     private static final int PICK_IMAGE = 1;
     RecyclerView recyclerView;
@@ -60,7 +64,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         backBtn = findViewById(R.id.backBtn);
         sliderButton = findViewById(R.id.sliderBtn);
 
-        adapter = new RecyclerAdapter(uri,getApplicationContext(),this, this);
+        adapter = new RecyclerAdapter(uri,getApplicationContext(),this, this, this);
 
         recyclerView.setLayoutManager(new GridLayoutManager(AddImage.this, 3));
         recyclerView.setAdapter(adapter);
@@ -295,4 +299,32 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         startActivity(intent);
     }
 
+    @Override
+    public void itemClick(int position) {
+
+        Dialog dialog = new Dialog(this);
+
+        dialog.setContentView(R.layout.zoom_photo);
+
+        TextView textView = dialog.findViewById(R.id.zoomPhoto_Text);
+        ImageView imageView = dialog.findViewById(R.id.image_view_zoom);
+        Button buttonClose = dialog.findViewById(R.id.btn_close_zoom);
+
+        textView.setText("Image" + position);
+
+        Glide.with(this)
+                .load(uri.get(position)) // Load the URI using Glide
+                .placeholder(R.drawable.placeholder_image)  // Placeholder while loading
+                .error(R.drawable.error_image) // Show an error image if it fails to load
+                .into(imageView);
+
+        buttonClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
 }
