@@ -39,6 +39,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
     TextView textView;
     Button addBtn;
     Button backBtn;
+    Button sliderButton;
     ArrayList<Uri> uri = new ArrayList<>();
     RecyclerAdapter adapter;
 
@@ -57,6 +58,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         recyclerView = findViewById(R.id.myRecyclerView);
         addBtn = findViewById(R.id.addBtn);
         backBtn = findViewById(R.id.backBtn);
+        sliderButton = findViewById(R.id.sliderBtn);
 
         adapter = new RecyclerAdapter(uri,getApplicationContext(),this, this);
 
@@ -91,7 +93,16 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
             }
         });
 
-
+        Button sliderButton = findViewById(R.id.sliderBtn);
+        sliderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(AddImage.this, ImageSliderActivity.class);
+                // Assuming `uri` contains the list of image URIs
+                intent.putParcelableArrayListExtra("imageUris", uri);
+                startActivity(intent);
+            }
+        });
 
     }
 
@@ -101,30 +112,29 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
 
         if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && null != data) {
             if (data.getClipData() != null) {
-
-                //get multiple images
+                // Get multiple images
                 int countImages = data.getClipData().getItemCount();
 
                 for (int i = 0; i < countImages; i++) {
-                    uriImage = data.getClipData().getItemAt(i).getUri();
-                    uri.add(uriImage);
-                    uploadToFirebase();
+                    Uri imageUri = data.getClipData().getItemAt(i).getUri();  // Get each URI
+                    uri.add(imageUri);  // Add to the URI list
+                    uploadToFirebase(imageUri);  // Pass each URI to the upload function
                 }
 
-                //notify adapter
+                // Notify adapter
                 adapter.notifyDataSetChanged();
                 textView.setText("Photos(" + uri.size() + ")");
-            } else {
-                // get single image
-                uriImage = data.getData();
-                //add code to arraylist
-                uri.add(uriImage);
-                uploadToFirebase();
+
+            } else if (data.getData() != null) {
+                // Get single image
+                Uri imageUri = data.getData();
+                uri.add(imageUri);  // Add to the URI list
+                uploadToFirebase(imageUri);  // Pass the URI to the upload function
+                adapter.notifyDataSetChanged();
+                textView.setText("Photos(" + uri.size() + ")");
             }
-            adapter.notifyDataSetChanged();
-            textView.setText("Photos(" + uri.size() + ")");
         } else {
-            Toast.makeText(this, "You haven't pick any image", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "You haven't picked any image", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -141,20 +151,21 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         deleteImageReferenceFromDatabase(imageUrl);
     }
 
-    private void uploadToFirebase() {
+    private void uploadToFirebase(Uri imageUri) {
         final String randomName = UUID.randomUUID().toString();
-        storageReference = FirebaseStorage.getInstance().getReference().child("images/" + randomName);
+        StorageReference imageRef = FirebaseStorage.getInstance().getReference().child("images/" + randomName);
 
-        storageReference.putFile(uriImage)
+        imageRef.putFile(imageUri)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         // Get the download URL after the upload is complete
-                        storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                             @Override
                             public void onSuccess(Uri downloadUrl) {
+                                // Save each image with its unique download URL to Firestore
                                 saveImageToDatabase(downloadUrl.toString(), albumName);
-                                Toast.makeText(AddImage.this, "Image Uploaded", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(AddImage.this, "Image Uploaded: " + downloadUrl.toString(), Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -178,6 +189,8 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
+                        // Save the document ID for easier reference later
+                        String documentId = documentReference.getId();
                         Toast.makeText(AddImage.this, "Image saved to database", Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -188,6 +201,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                     }
                 });
     }
+
 
     private void deleteImageFromGallery(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
@@ -223,7 +237,7 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            // Delete the document that matches the URL
+                            // Delete the document by its ID
                             document.getReference().delete()
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(AddImage.this, "Image reference deleted from database", Toast.LENGTH_SHORT).show();
@@ -253,8 +267,8 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                         uri.clear();  // Clear the list before loading new data
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String url = document.getString("url");
-                            if (url != null && !url.isEmpty()) {
-                                uri.add(Uri.parse(url));  // Add image URIs to the list
+                            if (url != null && !url.isEmpty() && !uriContains(url)) {
+                                uri.add(Uri.parse(url));  // Add image URIs to the list if not already present
                             }
                         }
                         adapter.notifyDataSetChanged();  // Refresh the RecyclerView
@@ -264,4 +278,21 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
                     }
                 });
     }
+
+    private boolean uriContains(String url) {
+        for (Uri uriItem : uri) {
+            if (uriItem.toString().equals(url)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void showImageSlider() {
+        // Launch the new ImageSliderActivity with the image URIs
+        Intent intent = new Intent(AddImage.this, ImageSliderActivity.class);
+        intent.putParcelableArrayListExtra("imageUris", uri);  // Pass the image URIs
+        startActivity(intent);
+    }
+
 }
