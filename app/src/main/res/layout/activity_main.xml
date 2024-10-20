@@ -36,6 +36,13 @@
             android:textSize="45sp" />
     </LinearLayout>
 
+    <Button
+        android:id="@+id/sliderBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Image Slider"
+        android:layout_gravity="start"/>
+
     <TextView
         android:id="@+id/totalPhotos"
         android:layout_width="wrap_content"
@@ -52,5 +59,6 @@
         android:layout_marginTop="5dp"
         android:scrollbarStyle="outsideInset"
         android:scrollbars="vertical" />
+
 
 </LinearLayout>
