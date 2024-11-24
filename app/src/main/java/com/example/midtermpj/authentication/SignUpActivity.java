@@ -1,4 +1,4 @@
-package com.example.midtermpj;
+package com.example.midtermpj.authentication;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,7 +11,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.midtermpj.LoginActivity;
 import com.example.midtermpj.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;

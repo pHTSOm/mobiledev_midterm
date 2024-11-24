@@ -35,10 +35,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class AddImage extends AppCompatActivity implements  RecyclerAdapter.CountImageUpdate
-        , RecyclerAdapter.DeleteImageListener, RecyclerAdapter.itemClickListener {
-    private static final int Read_Permission = 101;
+public class AddImage
+        extends     AppCompatActivity
+        implements  RecyclerAdapter.CountImageUpdate,
+                    RecyclerAdapter.DeleteImageListener,
+                    RecyclerAdapter.itemClickListener {
+    private static final int READ_PERMISSION = 101;
     private static final int PICK_IMAGE = 1;
+
     RecyclerView recyclerView;
     TextView textView;
     Button addBtn;
@@ -64,16 +68,18 @@ public class AddImage extends AppCompatActivity implements  RecyclerAdapter.Coun
         backBtn = findViewById(R.id.backBtn);
         sliderButton = findViewById(R.id.sliderBtn);
 
-        adapter = new RecyclerAdapter(uri,getApplicationContext(),this, this, this);
-
+        adapter = new RecyclerAdapter(uri,getApplicationContext(),
+                this, this, this);
         recyclerView.setLayoutManager(new GridLayoutManager(AddImage.this, 3));
         recyclerView.setAdapter(adapter);
 
-        if (ContextCompat.checkSelfPermission(AddImage.this, Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (ContextCompat.checkSelfPermission(
+                AddImage.this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(AddImage.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, Read_Permission);
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, READ_PERMISSION);
 
         }
 

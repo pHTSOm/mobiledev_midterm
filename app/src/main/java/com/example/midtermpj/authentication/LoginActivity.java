@@ -1,4 +1,4 @@
-package com.example.midtermpj;
+package com.example.midtermpj.authentication;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,10 +12,9 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
+import com.example.midtermpj.MainActivity;
+import com.example.midtermpj.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.AuthResult;
@@ -33,13 +32,12 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
-
         auth = FirebaseAuth.getInstance();
-        loginEmail = findViewById(R.id.login_email);
-        loginPassword = findViewById(R.id.login_password);
-        signupRedirectText = findViewById(R.id.signupRedirectText);
-        loginButton = findViewById(R.id.login_button);
+        initializeViews();
+        initializeEventHandler();
+    }
 
+    private void initializeEventHandler() {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -79,6 +77,12 @@ public class LoginActivity extends AppCompatActivity {
                   startActivity(new Intent(LoginActivity.this, SignUpActivity.class));
             }
         });
+    }
 
+    private void initializeViews() {
+        loginEmail = findViewById(R.id.login_email);
+        loginPassword = findViewById(R.id.login_password);
+        signupRedirectText = findViewById(R.id.signupRedirectText);
+        loginButton = findViewById(R.id.login_button);
     }
 }
