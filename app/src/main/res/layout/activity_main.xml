@@ -5,43 +5,35 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/background">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/backBtn"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start"
-            android:layout_marginTop="5dp"
-            android:layout_weight="1"
-            android:layout_marginRight="130dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:background="@drawable/backbtn"
             android:textSize="45sp" />
 
-        <Button
-            android:id="@+id/addBtn"
+        <Space
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="5dp"
-            android:layout_weight="1"
-            android:layout_marginLeft="130dp"
-            android:text="+"
-            android:textSize="45sp" />
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/sliderBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Image Slider"
+            android:layout_gravity="start"/>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/sliderBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Create Image Slider"
-        android:layout_gravity="start"/>
+
 
     <TextView
         android:id="@+id/totalPhotos"
@@ -55,10 +47,17 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/myRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
         android:scrollbarStyle="outsideInset"
         android:scrollbars="vertical" />
 
+    <Button
+        android:id="@+id/addBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+"
+        android:textSize="45sp"
+        android:layout_marginTop="350sp"/>
 
 </LinearLayout>
