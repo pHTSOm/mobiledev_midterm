@@ -2,57 +2,65 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:gravity="center">
-
-    <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <!-- Album Image -->
-        <ImageView
-            android:id="@+id/galleryImageView"
-            android:layout_width="90dp"
-            android:layout_height="80dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="Album image" />
-
-        <!-- Delete Icon -->
-        <ImageView
-            android:id="@+id/deleteAlbum_ic"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="end|top"
-            android:padding="4dp"
-            android:src="@drawable/delete_album_ic"
-            android:contentDescription="Delete Album" />
-    </FrameLayout>
-
-    <!-- Horizontal Layout for Album Name and Rename Icon -->
+    android:layout_height="match_parent"
+    android:background="@drawable/background"
+    >
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center">
-
-        <!-- Album Name -->
-        <TextView
-            android:id="@+id/albumNameTextView"
+        android:padding="8dp"
+        android:gravity="center"
+        >
+        <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="10dp"
-            android:text="Album Name"
-            android:textSize="18sp"
-            android:layout_marginTop="8dp" />
+            >
 
-        <!-- Rename Icon -->
-        <ImageView
-            android:id="@+id/renameIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/rename_ic"
-            android:contentDescription="Rename Album" />
+            <!-- Album Image -->
+            <ImageView
+                android:id="@+id/galleryImageView"
+                android:layout_width="90dp"
+                android:layout_height="80dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Album image" />
+
+            <!-- Delete Icon -->
+            <ImageView
+                android:id="@+id/deleteAlbum_ic"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="end|top"
+                android:padding="4dp"
+                android:src="@drawable/delete_album_ic"
+                android:contentDescription="Delete Album" />
+        </FrameLayout>
+
+    <!-- Horizontal Layout for Album Name and Rename Icon -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+            <!-- Album Name -->
+            <TextView
+                android:id="@+id/albumNameTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="10dp"
+                android:text="Album Name"
+                android:textSize="18sp"
+                android:layout_marginTop="8dp" />
+
+            <!-- Rename Icon -->
+            <ImageView
+                android:id="@+id/renameIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/rename_ic"
+                android:contentDescription="Rename Album" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

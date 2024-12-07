@@ -9,10 +9,9 @@
 
     <Button
         android:id="@+id/backBtn"
-        android:layout_width="58dp"
-        android:layout_height="63dp"
-        android:background="@drawable/backbtn"
-        android:textSize="45sp" />
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/backbtn"/>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"

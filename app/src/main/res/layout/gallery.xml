@@ -3,28 +3,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/background">
 
     <EditText
         android:id="@+id/albumNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter album name"/>
-
-    <Button
-        android:id="@+id/createAlbumBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Create Album" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="37dp"
-        android:text="Switch"
-        android:id="@+id/switchButton"
-        android:background="@drawable/switch_button"
-        android:textAllCaps="false"
+        android:hint="Enter album name"
         />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/createAlbumBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Album" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="37dp"
+            android:text="Switch"
+            android:id="@+id/switchButton"
+            android:background="@drawable/switch_button"
+            android:textAllCaps="false"
+            />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/albumsRecyclerView"
