@@ -1,14 +1,11 @@
 package com.example.midtermpj;
 
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,26 +13,22 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
     EditText albumNameEditText;
     Button createAlbumBtn;
     RecyclerView albumsRecyclerView;
     AlbumsAdapter albumsAdapter;
     ArrayList<String> albums = new ArrayList<>();
     DatabaseReference albumRef; // Firebase reference
-    boolean isListView= true;
-    ScaleGestureDetector scaleGestureDetector;
-    float FACTOR = 1.0f;
-    ImageView imageView;
+    boolean isListView = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,46 +62,39 @@ public class MainActivity extends AppCompatActivity{
 
         albumsRecyclerView.setLayoutManager(new GridLayoutManager(MainActivity.this, 3));
         albumsRecyclerView.setAdapter(albumsAdapter);
-        setRecyclerViewLayoutManager(isListView);//defaul is listView
+        setRecyclerViewLayoutManager(isListView); // Default is ListView
 
         // Add click listener to Create Album button
-        createAlbumBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("MainActivity", "Create album button clicked");
-                String albumName = albumNameEditText.getText().toString();
-                if (!albumName.isEmpty()) {
-                    // Add album to Firebase
-                    addAlbumToFirebase(albumName);
+        createAlbumBtn.setOnClickListener(v -> {
+            Log.d("MainActivity", "Create album button clicked");
+            String albumName = albumNameEditText.getText().toString();
+            if (!albumName.isEmpty()) {
+                // Add album to Firebase
+                addAlbumToFirebase(albumName);
 
-                    // Clear the EditText field
-                    albumNameEditText.setText("");
-                } else {
-                    Toast.makeText(MainActivity.this, "Enter album name", Toast.LENGTH_SHORT).show();
-                }
+                // Clear the EditText field
+                albumNameEditText.setText("");
+            } else {
+                Toast.makeText(MainActivity.this, "Enter album name", Toast.LENGTH_SHORT).show();
             }
         });
 
         // Load albums from Firebase
         loadAlbumsFromFirebase();
         switchButton.setOnClickListener(v -> {
-            isListView = !isListView; // toggle between list and grid
+            isListView = !isListView; // Toggle between list and grid
             setRecyclerViewLayoutManager(isListView);
 
             // Update button text
-            if (isListView) {
-                switchButton.setText("List");
-            } else {
-                switchButton.setText("Grid");
-            }
+            switchButton.setText(isListView ? "List" : "Grid");
         });
     }
 
     private void setRecyclerViewLayoutManager(boolean isListView) {
-        if (isListView){
+        if (isListView) {
             albumsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        }else {
-            albumsRecyclerView.setLayoutManager(new GridLayoutManager(this,3));
+        } else {
+            albumsRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         }
     }
 
@@ -129,7 +115,6 @@ public class MainActivity extends AppCompatActivity{
             }
         });
     }
-
 
     private void loadAlbumsFromFirebase() {
         albumRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -152,17 +137,15 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-        private void deleteAlbumFromFirebase(String albumName, int position) {
-            DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums");
-            albumRef.child(albumName).removeValue().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    // Remove the album from the local list and notify the adapter
-                    albums.remove(position);
-                    albumsAdapter.notifyItemRemoved(position);
-                    Toast.makeText(MainActivity.this, "Album deleted", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MainActivity.this, "Failed to delete album", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
+    private void deleteAlbumFromFirebase(String albumName, int position) {
+        albumRef.child(albumName).removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                albums.remove(position);
+                albumsAdapter.notifyItemRemoved(position);
+                Toast.makeText(MainActivity.this, "Album deleted", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Failed to delete album", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 }

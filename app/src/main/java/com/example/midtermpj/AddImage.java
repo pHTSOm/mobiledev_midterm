@@ -312,7 +312,7 @@ public class AddImage
 
         dialog.setContentView(R.layout.zoom_photo);
 
-        TextView textView = dialog.findViewById(R.id.zoomPhoto_Text);
+//        TextView textView = dialog.findViewById(R.id.zoomPhoto_Text);
         ImageView imageView = dialog.findViewById(R.id.image_view_zoom);
         Button buttonClose = dialog.findViewById(R.id.btn_close_zoom);
 
