@@ -23,12 +23,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,10 +39,10 @@ import java.util.Map;
 import java.util.UUID;
 
 public class AddImage
-        extends     AppCompatActivity
-        implements  RecyclerAdapter.CountImageUpdate,
-                    RecyclerAdapter.DeleteImageListener,
-                    RecyclerAdapter.itemClickListener {
+        extends AppCompatActivity
+        implements RecyclerAdapter.CountImageUpdate,
+        RecyclerAdapter.DeleteImageListener,
+        RecyclerAdapter.itemClickListener {
     private static final int READ_PERMISSION = 101;
     private static final int PICK_IMAGE = 1;
 
@@ -50,10 +53,9 @@ public class AddImage
     Button sliderButton;
     ArrayList<Uri> uri = new ArrayList<>();
     RecyclerAdapter adapter;
-
-    private Uri uriImage;
     StorageReference storageReference;
     String albumName;
+    private Uri uriImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,7 @@ public class AddImage
         backBtn = findViewById(R.id.backBtn);
         sliderButton = findViewById(R.id.sliderBtn);
 
-        adapter = new RecyclerAdapter(uri,getApplicationContext(),
+        adapter = new RecyclerAdapter(uri, getApplicationContext(),
                 this, this, this);
         recyclerView.setLayoutManager(new GridLayoutManager(AddImage.this, 3));
         recyclerView.setAdapter(adapter);
@@ -144,10 +146,10 @@ public class AddImage
                 textView.setText("Photos(" + uri.size() + ")");
             }
         } else {
-            Toast.makeText(this, "You haven't picked any image", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "You haven't picked any image"
+                    , Toast.LENGTH_LONG).show();
         }
     }
-
 
 
     @Override
@@ -157,35 +159,102 @@ public class AddImage
 
     @Override
     public void onDeleteImage(String imageUrl) {
-        deleteImageFromGallery(imageUrl);
-        deleteImageReferenceFromDatabase(imageUrl);
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            Toast.makeText(AddImage.this, "Invalid image URL"
+                    , Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Remove from Firebase Storage
+        StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl);
+        storageRef.delete()
+                .addOnSuccessListener(aVoid -> {
+                    // Remove from Realtime Database
+                    DatabaseReference albumRef = FirebaseDatabase.getInstance()
+                            .getReference("albums").child(albumName).child("images");
+                    albumRef.orderByValue().equalTo(imageUrl)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+                                        childSnapshot.getRef().removeValue();
+                                    }
+                                    // Update local list and RecyclerView
+                                    uri.remove(Uri.parse(imageUrl));
+                                    adapter.notifyDataSetChanged();
+                                    textView.setText("Photos(" + uri.size() + ")");
+                                    Toast.makeText(AddImage.this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+                                    Toast.makeText(AddImage.this, "Failed to delete image reference: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> Toast.makeText(AddImage.this, "Failed to delete image from storage: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
+
 
     private void uploadToFirebase(Uri imageUri) {
         final String randomName = UUID.randomUUID().toString();
-        StorageReference imageRef = FirebaseStorage.getInstance().getReference().child("images/" + randomName);
+        StorageReference imageRef = FirebaseStorage.getInstance().getReference()
+                .child("images/" + randomName);
 
         imageRef.putFile(imageUri)
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        // Get the download URL after the upload is complete
-                        imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                            @Override
-                            public void onSuccess(Uri downloadUrl) {
-                                // Save each image with its unique download URL to Firestore
-                                saveImageToDatabase(downloadUrl.toString(), albumName);
-                                Toast.makeText(AddImage.this, "Image Uploaded: " + downloadUrl.toString(), Toast.LENGTH_SHORT).show();
+                .addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl()
+                        .addOnSuccessListener(downloadUrl -> {
+                            String imageUrl = downloadUrl.toString();
+
+                            // Save to Realtime Database
+                            DatabaseReference albumRef = FirebaseDatabase.getInstance()
+                                    .getReference("albums").child(albumName);
+
+                            // Generate a unique ID for the image
+                            String imageId = albumRef.child("images").push().getKey();
+
+                            if (imageId != null) {
+                                // Add the image URL to the album
+                                albumRef.child("images").child(imageId).setValue(imageUrl)
+                                        .addOnSuccessListener(aVoid -> {
+                                            Toast.makeText(AddImage.this
+                                                    , "Image uploaded successfully"
+                                                    , Toast.LENGTH_SHORT).show();
+
+                                            // Update the thumbnail if this is the first image
+                                            albumRef.child("thumbnail")
+                                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                        @Override
+                                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                            if (!snapshot.exists() || snapshot
+                                                                    .getValue(String.class)
+                                                                    .isEmpty()) {
+                                                                albumRef.child("thumbnail")
+                                                                        .setValue(imageUrl);
+
+                                                                // Notify AlbumsAdapter of the new thumbnail
+                                                                MainActivity.albumsAdapter
+                                                                        .updateThumbnail(albumName, imageUrl);
+
+                                                            }
+                                                        }
+
+                                                        @Override
+                                                        public void onCancelled(@NonNull DatabaseError error) {
+                                                            Toast.makeText(AddImage.this
+                                                                    , "Failed to set thumbnail"
+                                                                    , Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+
+                                        })
+                                        .addOnFailureListener(e -> Toast.makeText(AddImage.this
+                                                , "Failed to update database: " + e.getMessage()
+                                                , Toast.LENGTH_SHORT).show());
                             }
-                        });
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(AddImage.this, "Upload Failed", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                        }))
+                .addOnFailureListener(e -> Toast.makeText(AddImage.this
+                        , "Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
 
@@ -195,98 +264,50 @@ public class AddImage
         image.put("url", imageUrl);
         image.put("album", albumName);
 
-        db.collection("albums").document(albumName).collection("images").add(image)
+        db.collection("albums").document(albumName).collection("images")
+                .add(image)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         // Save the document ID for easier reference later
                         String documentId = documentReference.getId();
-                        Toast.makeText(AddImage.this, "Image saved to database", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AddImage.this, "Image saved to database"
+                                , Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(AddImage.this, "Failed to save image to database", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AddImage.this, "Failed to save image to database"
+                                , Toast.LENGTH_SHORT).show();
                     }
                 });
     }
-
-
-    private void deleteImageFromGallery(String imageUrl) {
-        if (imageUrl == null || imageUrl.isEmpty()) {
-            Toast.makeText(AddImage.this, "Invalid image URL", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl);
-            storageReference.delete()
-                    .addOnSuccessListener(aVoid -> {
-                        // Handle successful deletion
-                        Toast.makeText(AddImage.this, "Image deleted from storage", Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> {
-                        // Handle failure
-                        Toast.makeText(AddImage.this, "Failed to delete image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(AddImage.this, "Failed to parse the storage URI", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-
-    private void deleteImageReferenceFromDatabase(String imageUrl) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        // Query to find the document that matches the image URL
-        db.collection("albums").document(albumName).collection("images")
-                .whereEqualTo("url", imageUrl)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            // Delete the document by its ID
-                            document.getReference().delete()
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(AddImage.this, "Image reference deleted from database", Toast.LENGTH_SHORT).show();
-                                        // Now remove the image from your local list
-                                        uri.remove(Uri.parse(imageUrl));
-                                        adapter.notifyDataSetChanged();
-                                        textView.setText("Photos(" + uri.size() + ")");
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(AddImage.this, "Failed to delete image reference: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    });
-                        }
-                    } else {
-                        Toast.makeText(AddImage.this, "Failed to find image reference in database", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-
 
     private void loadImagesFromDatabase() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("albums").document(albumName).collection("images")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        uri.clear();  // Clear the list before loading new data
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            String url = document.getString("url");
-                            if (url != null && !url.isEmpty() && !uriContains(url)) {
-                                uri.add(Uri.parse(url));  // Add image URIs to the list if not already present
-                            }
-                        }
-                        adapter.notifyDataSetChanged();  // Refresh the RecyclerView
-                        textView.setText("Photos(" + uri.size() + ")");
-                    } else {
-                        Toast.makeText(AddImage.this, "Failed to load images", Toast.LENGTH_SHORT).show();
+        DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums")
+                .child(albumName).child("images");
+
+        albumRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                uri.clear(); // Clear the list before loading new data
+                for (DataSnapshot imageSnapshot : snapshot.getChildren()) {
+                    String imageUrl = imageSnapshot.getValue(String.class);
+                    if (imageUrl != null && !uriContains(imageUrl)) {
+                        uri.add(Uri.parse(imageUrl));
                     }
-                });
+                }
+                adapter.notifyDataSetChanged();
+                textView.setText("Photos(" + uri.size() + ")");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(AddImage.this, "Failed to load images"
+                        , Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private boolean uriContains(String url) {

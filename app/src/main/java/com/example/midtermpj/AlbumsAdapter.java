@@ -23,6 +23,7 @@ import com.google.firebase.database.ValueEventListener;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder> {
@@ -30,7 +31,7 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     private ArrayList<String> albums;
     private OnAlbumClickListener listener;
     private OnDeleteClickListener onDeleteClickListener;
-
+    private Map<String, String> albumThumbnails = new HashMap<>();
 
 
     public AlbumsAdapter(ArrayList<String> albums, OnAlbumClickListener listener, OnDeleteClickListener onDeleteClickListener) {
@@ -51,16 +52,26 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
         String albumName = albums.get(position);
         holder.albumNameTextView.setText(albumName);
 
+        // Get the thumbnail URL from the map
+        String thumbnailUrl = albumThumbnails.get(albumName);
+        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(thumbnailUrl)
+                    .placeholder(R.drawable.placeholder_image)
+                    .into(holder.galleryImageView);
+        } else {
+            holder.galleryImageView.setImageResource(R.drawable.placeholder_image); // Default icon
+        }
+
         holder.renameIcon.setOnClickListener(v -> {
             // Show dialog to rename the album
             showRenameDialog(holder.itemView.getContext(), albumName, position);
         });
 
-        holder.galleryImageView.setImageResource(R.drawable.photos_gallery);
-
         holder.itemView.setOnClickListener(v -> listener.onAlbumClick(albumName));
 
-        holder.deleteAlbum_ic.setOnClickListener(v -> onDeleteClickListener.onDeleteClick(albumName, position));
+        holder.deleteAlbum_ic.setOnClickListener(v -> onDeleteClickListener
+                .onDeleteClick(albumName, position));
     }
 
     private void showRenameDialog(Context context, String oldAlbumName, int position) {
@@ -130,6 +141,11 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     @Override
     public int getItemCount() {
         return albums.size();
+    }
+
+    public void updateThumbnail(String albumName, String thumbnailUrl) {
+        albumThumbnails.put(albumName, thumbnailUrl);
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
