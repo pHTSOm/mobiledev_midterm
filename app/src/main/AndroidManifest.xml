@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".album.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,11 +40,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AddImage"
-            android:parentActivityName=".MainActivity" />
+            android:name=".imagefunctionrelated.AddImage"
+            android:parentActivityName=".album.MainActivity" />
         <activity
-            android:name=".ImageSliderActivity"
-            android:parentActivityName=".AddImage" />
+            android:name=".imageslider.ImageSliderActivity"
+            android:parentActivityName=".imagefunctionrelated.AddImage" />
+
+
     </application>
 
 </manifest>

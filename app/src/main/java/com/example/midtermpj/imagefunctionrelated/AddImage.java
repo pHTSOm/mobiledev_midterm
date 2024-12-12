@@ -1,4 +1,4 @@
-package com.example.midtermpj;
+package com.example.midtermpj.imagefunctionrelated;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -21,6 +21,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.midtermpj.imageslider.ImageSliderActivity;
+import com.example.midtermpj.album.MainActivity;
+import com.example.midtermpj.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
@@ -328,23 +331,22 @@ public class AddImage
 
     @Override
     public void itemClick(int position) {
-
         Dialog dialog = new Dialog(this);
-
         dialog.setContentView(R.layout.zoom_photo);
 
-//        TextView textView = dialog.findViewById(R.id.zoomPhoto_Text);
-        ImageView imageView = dialog.findViewById(R.id.image_view_zoom);
+        ZoomableImageView imageView = dialog.findViewById(R.id.image_view_zoom);
         Button buttonClose = dialog.findViewById(R.id.btn_close_zoom);
+        Button buttonShare = dialog.findViewById(R.id.btn_share);
 
-        textView.setText("Image" + position);
-
+        // Load the image into the ZoomableImageView
         Glide.with(this)
                 .load(uri.get(position)) // Load the URI using Glide
                 .placeholder(R.drawable.placeholder_image)  // Placeholder while loading
                 .error(R.drawable.error_image) // Show an error image if it fails to load
+                .fitCenter()
                 .into(imageView);
 
+        // Set up the close button
         buttonClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -352,6 +354,23 @@ public class AddImage
             }
         });
 
+        // Set up the share button
+        buttonShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Uri imageUri = uri.get(position); // Get the URI of the clicked image
+                if (imageUri != null) {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("image/*");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+                    startActivity(Intent.createChooser(shareIntent, "Share Image"));
+                } else {
+                    Toast.makeText(AddImage.this, "No image to share", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         dialog.show();
     }
+
 }

@@ -1,8 +1,9 @@
-package com.example.midtermpj;
+package com.example.midtermpj.imagefunctionrelated;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -14,6 +15,7 @@ public class ZoomableImageView extends AppCompatImageView {
     private ScaleGestureDetector scaleGestureDetector;
     private float scaleFactor = 1.0f;
     private Matrix matrix = new Matrix();
+    private Uri imageUri;
 
     public ZoomableImageView(Context context) {
         super(context);
@@ -28,6 +30,14 @@ public class ZoomableImageView extends AppCompatImageView {
     public ZoomableImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
+    }
+
+    public Uri getImageUri() {
+        return imageUri;
+    }
+
+    public void setImageUri(Uri imageUri) {
+        this.imageUri = imageUri;
     }
 
     private void init(Context context) {

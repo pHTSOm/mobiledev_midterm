@@ -1,4 +1,4 @@
-package com.example.midtermpj;
+package com.example.midtermpj.album;
 
 
 import android.app.AlertDialog;
@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.midtermpj.R;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
