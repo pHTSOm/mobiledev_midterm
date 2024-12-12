@@ -14,14 +14,28 @@
         android:textSize="22dp"
         android:textStyle="bold" />
 
+
+
     <!-- Custom ZoomableImageView -->
-    <com.example.midtermpj.ZoomableImageView
+    <com.example.midtermpj.imagefunctionrelated.ZoomableImageView
         android:id="@+id/image_view_zoom"
         android:layout_width="500dp"
         android:layout_height="400dp"
         android:layout_below="@id/zoomPhoto_Text"
         android:scaleType="centerCrop"
         android:src="@drawable/placeholder_image" />
+
+
+
+
+    <!-- Share Button-->
+    <Button
+        android:id="@+id/btn_share"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/btn_close_zoom"
+        android:layout_marginStart="10dp"
+        android:text="Share" />
 
     <!-- Close Button -->
     <Button
@@ -34,5 +48,8 @@
         android:text="Close"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
+
+
+
 
 </RelativeLayout>
