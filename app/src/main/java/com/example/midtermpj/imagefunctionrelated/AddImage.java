@@ -88,6 +88,20 @@ public class AddImage
 
         }
 
+        if ("Like Image".equals(albumName)) {
+            addBtn.setVisibility(View.GONE); // Hide the button
+        } else {
+            addBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+                }
+            });
+        }
+
         loadImagesFromDatabase();
 
         addBtn.setOnClickListener(new View.OnClickListener() {
@@ -329,6 +343,41 @@ public class AddImage
         startActivity(intent);
     }
 
+    private void addImageToLikeAlbum(String imageUrl) {
+        DatabaseReference albumsRef = FirebaseDatabase.getInstance().getReference("albums");
+        DatabaseReference likeAlbumRef = albumsRef.child("Like Image");
+
+        // Check if the Like Image album already exists
+        likeAlbumRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    // Create the Like Image album with a placeholder thumbnail
+                    Map<String, Object> albumData = new HashMap<>();
+                    albumData.put("thumbnail", imageUrl); // Use the liked image as thumbnail
+                    albumData.put("images", new HashMap<>()); // Initialize empty images map
+
+                    likeAlbumRef.setValue(albumData).addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // Add the liked image to the Like Image album
+                            likeAlbumRef.child("images").push().setValue(imageUrl);
+                            Toast.makeText(AddImage.this, "Like Image album created", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // Add the liked image to the existing Like Image album
+                    likeAlbumRef.child("images").push().setValue(imageUrl);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(AddImage.this, "Failed to access Like Image album: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
     @Override
     public void itemClick(int position) {
         Dialog dialog = new Dialog(this);
@@ -337,10 +386,12 @@ public class AddImage
         ZoomableImageView imageView = dialog.findViewById(R.id.image_view_zoom);
         Button buttonClose = dialog.findViewById(R.id.btn_close_zoom);
         Button buttonShare = dialog.findViewById(R.id.btn_share);
+        Button buttonLike = dialog.findViewById(R.id.btn_like);
 
+        String imageUrl = uri.get(position).toString();
         // Load the image into the ZoomableImageView
         Glide.with(this)
-                .load(uri.get(position)) // Load the URI using Glide
+                .load(imageUrl) // Load the URI using Glide
                 .placeholder(R.drawable.placeholder_image)  // Placeholder while loading
                 .error(R.drawable.error_image) // Show an error image if it fails to load
                 .fitCenter()
@@ -365,9 +416,16 @@ public class AddImage
                     shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
                     startActivity(Intent.createChooser(shareIntent, "Share Image"));
                 } else {
-                    Toast.makeText(AddImage.this, "No image to share", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AddImage.this, "No image to share"
+                            , Toast.LENGTH_SHORT).show();
                 }
             }
+        });
+
+        // Like button functionality
+        buttonLike.setOnClickListener(view -> {
+            addImageToLikeAlbum(imageUrl);
+            Toast.makeText(this, "Image added to Like Album", Toast.LENGTH_SHORT).show();
         });
 
         dialog.show();

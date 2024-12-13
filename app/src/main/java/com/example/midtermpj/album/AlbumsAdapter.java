@@ -35,7 +35,8 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     private Map<String, String> albumThumbnails = new HashMap<>();
 
 
-    public AlbumsAdapter(ArrayList<String> albums, OnAlbumClickListener listener, OnDeleteClickListener onDeleteClickListener) {
+    public AlbumsAdapter(ArrayList<String> albums, OnAlbumClickListener listener
+            , OnDeleteClickListener onDeleteClickListener) {
         this.albums = albums;
         this.listener = listener;
         this.onDeleteClickListener = onDeleteClickListener;
@@ -44,7 +45,8 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.album_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.album_item
+                , parent, false);
         return new ViewHolder(view);
     }
 
@@ -62,6 +64,14 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
                     .into(holder.galleryImageView);
         } else {
             holder.galleryImageView.setImageResource(R.drawable.placeholder_image); // Default icon
+        }
+
+        if ("Like Image".equals(albumName)) {
+            holder.deleteAlbum_ic.setVisibility(View.GONE); // Hide the delete icon
+        } else {
+            holder.deleteAlbum_ic.setVisibility(View.VISIBLE);
+            holder.deleteAlbum_ic.setOnClickListener(v -> onDeleteClickListener
+                    .onDeleteClick(albumName, position));
         }
 
         holder.renameIcon.setOnClickListener(v -> {
@@ -97,15 +107,20 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
         builder.show();
     }
 
-    private void updateAlbumNameInFirebase(Context context, String oldAlbumName, String newAlbumName, int position) {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("albums");
+    private void updateAlbumNameInFirebase(Context context, String oldAlbumName
+            , String newAlbumName, int position) {
+        DatabaseReference databaseReference = FirebaseDatabase
+                .getInstance()
+                .getReference("albums");
 
         // Check if the new album name already exists to prevent overwriting
-        databaseReference.child(newAlbumName).addListenerForSingleValueEvent(new ValueEventListener() {
+        databaseReference.child(newAlbumName)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    Toast.makeText(context, "Album with this name already exists.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Album with this name already exists."
+                            , Toast.LENGTH_SHORT).show();
                 } else {
                     // Set the new album name
                     databaseReference.child(newAlbumName).setValue(true)
@@ -116,23 +131,27 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
                                             // Update the local list and notify the adapter
                                             albums.set(position, newAlbumName);
                                             notifyItemChanged(position);
-                                            Toast.makeText(context, "Rename successful", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(context, "Rename successful"
+                                                    , Toast.LENGTH_SHORT).show();
                                         })
                                         .addOnFailureListener(e -> {
                                             // Handle the error during old album deletion
-                                            Toast.makeText(context, "Error deleting old album: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(context, "Error deleting old album: "
+                                                    + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         });
                             })
                             .addOnFailureListener(e -> {
                                 // Handle the error during new album creation
-                                Toast.makeText(context, "Error creating new album: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, "Error creating new album: "
+                                        + e.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                Toast.makeText(context, "Error checking existing album: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Error checking existing album: "
+                        + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -147,6 +166,69 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     public void updateThumbnail(String albumName, String thumbnailUrl) {
         albumThumbnails.put(albumName, thumbnailUrl);
         notifyDataSetChanged();
+    }
+
+
+//      Method to ensure the "Like Image" album exists and add the image to it.
+
+    public void addImageToLikeAlbum(String imageUrl, Context context) {
+        String likeAlbumName = "Like Image";
+
+        // Reference to the "Like Image" album in Firebase
+        DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums")
+                .child(likeAlbumName);
+
+        // Check if "Like Image" album exists
+        albumRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    // Create the "Like Image" album if it doesn't exist
+                    Map<String, Object> albumData = new HashMap<>();
+                    albumData.put("thumbnail", imageUrl); // Use the first liked image as the thumbnail
+                    albumData.put("images", new HashMap<>());
+
+                    albumRef.setValue(albumData).addOnSuccessListener(aVoid -> {
+                        // Add the album to the local list
+                        albums.add(likeAlbumName);
+                        albumThumbnails.put(likeAlbumName, imageUrl);
+                        notifyDataSetChanged();
+                        Toast.makeText(context, "Like Image album created"
+                                , Toast.LENGTH_SHORT).show();
+
+                        // Add the image to the "images" node
+                        addImageToAlbum(albumRef, imageUrl, context);
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(context, "Failed to create Like Image album: "
+                                + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                } else {
+                    // Album exists, just add the image to the "images" node
+                    addImageToAlbum(albumRef, imageUrl, context);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(context, "Failed to access Like Image album: "
+                        + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+//     method to add an image URL to a specific album.
+    private void addImageToAlbum(DatabaseReference albumRef, String imageUrl, Context context) {
+        String imageId = albumRef.child("images").push().getKey();
+        if (imageId != null) {
+            albumRef.child("images").child(imageId).setValue(imageUrl)
+                    .addOnSuccessListener(aVoid -> {
+                Toast.makeText(context, "Image added to Like Image album"
+                        , Toast.LENGTH_SHORT).show();
+            }).addOnFailureListener(e -> {
+                Toast.makeText(context, "Failed to add image to Like Image album: "
+                        + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

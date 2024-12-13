@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -8,12 +9,11 @@
         android:id="@+id/zoomPhoto_Text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
         android:layout_marginTop="20dp"
+        android:gravity="center"
         android:text="Image Preview"
         android:textSize="22dp"
         android:textStyle="bold" />
-
 
 
     <!-- Custom ZoomableImageView -->
@@ -26,16 +26,41 @@
         android:src="@drawable/placeholder_image" />
 
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="153dp"
+        android:layout_below="@id/image_view_zoom"
+        android:layout_marginTop="129dp">
+        <!-- Share Button-->
 
+        <!--Like Button-->
+        <Button
+            android:id="@+id/btn_share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="Share"
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.221" />
 
-    <!-- Share Button-->
-    <Button
-        android:id="@+id/btn_share"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/btn_close_zoom"
-        android:layout_marginStart="10dp"
-        android:text="Share" />
+        <Button
+            android:id="@+id/btn_like"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_marginEnd="16dp"
+            android:text="Like"
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.153" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     <!-- Close Button -->
     <Button
@@ -48,8 +73,6 @@
         android:text="Close"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
-
-
 
 
 </RelativeLayout>
