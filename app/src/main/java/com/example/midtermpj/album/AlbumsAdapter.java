@@ -74,6 +74,10 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
                     .onDeleteClick(albumName, position));
         }
 
+        if(albums.contains("Like Image")){
+            albums.remove("Like image");
+            albums.add(0,"Like image");
+        }
         holder.renameIcon.setOnClickListener(v -> {
             // Show dialog to rename the album
             showRenameDialog(holder.itemView.getContext(), albumName, position);
