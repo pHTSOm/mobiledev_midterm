@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -29,10 +30,12 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     EditText albumNameEditText;
-    Button createAlbumBtn;
+    Button createAlbumBtn, switchButton;
     RecyclerView albumsRecyclerView;
+    SearchView albumSearchView; // Added SearchView for search functionality
     public static AlbumsAdapter albumsAdapter;
     ArrayList<String> albums = new ArrayList<>();
+    ArrayList<String> filteredAlbums = new ArrayList<>(); // For search results
     DatabaseReference albumRef; // Firebase reference
     boolean isListView = true;
 
@@ -44,13 +47,14 @@ public class MainActivity extends AppCompatActivity {
         albumNameEditText = findViewById(R.id.albumNameEditText);
         createAlbumBtn = findViewById(R.id.createAlbumBtn);
         albumsRecyclerView = findViewById(R.id.albumsRecyclerView);
-        Button switchButton = findViewById(R.id.switchButton);
+        albumSearchView = findViewById(R.id.searchView); // Initialize SearchView
+        switchButton = findViewById(R.id.switchButton);
 
         // Firebase Database reference
         albumRef = FirebaseDatabase.getInstance().getReference("albums");
 
         // Initialize RecyclerView with AlbumsAdapter
-        albumsAdapter = new AlbumsAdapter(albums, new AlbumsAdapter.OnAlbumClickListener() {
+        albumsAdapter = new AlbumsAdapter(filteredAlbums, new AlbumsAdapter.OnAlbumClickListener() {
             @Override
             public void onAlbumClick(String albumName) {
                 // Navigate to AddImage activity when album is clicked
@@ -75,23 +79,35 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Create album button clicked");
             String albumName = albumNameEditText.getText().toString();
             if (!albumName.isEmpty()) {
-                // Add album to Firebase
-                addAlbumToFirebase(albumName);
-
-                // Clear the EditText field
-                albumNameEditText.setText("");
+                addAlbumToFirebase(albumName); // Add album to Firebase
+                albumNameEditText.setText(""); // Clear input field
             } else {
                 Toast.makeText(MainActivity.this, "Enter album name", Toast.LENGTH_SHORT).show();
             }
         });
 
+        // Search functionality for albums
+        albumSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                filterAlbums(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterAlbums(newText);
+                return false;
+            }
+        });
+
         // Load albums from Firebase
         loadAlbumsFromFirebase();
-        switchButton.setOnClickListener(v -> {
-            isListView = !isListView; // Toggle between list and grid
-            setRecyclerViewLayoutManager(isListView);
 
-            // Update button text
+        // Toggle between GridView and ListView
+        switchButton.setOnClickListener(v -> {
+            isListView = !isListView; // Toggle layout
+            setRecyclerViewLayoutManager(isListView);
             switchButton.setText(isListView ? "List" : "Grid");
         });
     }
@@ -107,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
     private void addAlbumToFirebase(String albumName) {
         DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums").child(albumName);
 
-        // Initialize the album with a placeholder thumbnail and empty images list
+        // Initialize album data
         Map<String, Object> albumData = new HashMap<>();
         albumData.put("thumbnail", ""); // Placeholder thumbnail
         albumData.put("images", new HashMap<>());
@@ -115,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
         albumRef.setValue(albumData).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 albums.add(albumName);
+                filteredAlbums.add(albumName);
                 albumsAdapter.notifyDataSetChanged();
                 Toast.makeText(MainActivity.this, "Album created", Toast.LENGTH_SHORT).show();
-
                 Intent intent = new Intent(MainActivity.this, AddImage.class);
                 intent.putExtra("ALBUM_NAME", albumName);
                 startActivity(intent);
@@ -131,66 +147,48 @@ public class MainActivity extends AppCompatActivity {
         albumRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                albums.clear(); // Clear the list before adding new items
+                albums.clear(); // Clear list before adding new items
+                filteredAlbums.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String albumName = snapshot.getKey();
                     if (albumName != null) {
                         albums.add(albumName);
-
-                        // Fetch the thumbnail for the album dynamically
-                        String thumbnail = snapshot.child("thumbnail").getValue(String.class);
-                        if (thumbnail != null && !thumbnail.isEmpty()) {
-                            albumsAdapter.updateThumbnail(albumName, thumbnail);
-                        } else {
-                            // No thumbnail yet; use a placeholder
-                            albumsAdapter.updateThumbnail(albumName, null);
-                        }
+                        filteredAlbums.add(albumName); // Initially show all albums
                     }
                 }
-                albumsAdapter.notifyDataSetChanged(); // Notify the adapter of dataset changes
+                albumsAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(MainActivity.this, "Failed to load albums"
-                        , Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Failed to load albums", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    private void filterAlbums(String query) {
+        filteredAlbums.clear();
+        if (query.isEmpty()) {
+            filteredAlbums.addAll(albums); // Show all albums if query is empty
+        } else {
+            for (String album : albums) {
+                if (album.toLowerCase().contains(query.toLowerCase())) {
+                    filteredAlbums.add(album);
+                }
+            }
+        }
+        albumsAdapter.notifyDataSetChanged(); // Notify adapter about dataset changes
+    }
+
     private void deleteAlbumFromFirebase(String albumName, int position) {
         DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums").child(albumName);
-
-        // Fetch all images from the album
-        albumRef.child("images").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for (DataSnapshot imageSnapshot : snapshot.getChildren()) {
-                    String imageUrl = imageSnapshot.getValue(String.class);
-
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        // Delete each image from Firebase Storage
-                        StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl);
-                        storageRef.delete().addOnFailureListener(e -> {
-                            Toast.makeText(MainActivity.this, "Failed to delete image from storage: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                }
-
-                // Once all images are deleted, delete the album entry
-                albumRef.removeValue().addOnSuccessListener(aVoid -> {
-                    albums.remove(position);
-                    albumsAdapter.notifyItemRemoved(position);
-                    Toast.makeText(MainActivity.this, "Album deleted successfully", Toast.LENGTH_SHORT).show();
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(MainActivity.this, "Failed to delete album: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(MainActivity.this, "Failed to fetch album images: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
+        albumRef.removeValue().addOnSuccessListener(aVoid -> {
+            albums.remove(position);
+            filteredAlbums.remove(albumName);
+            albumsAdapter.notifyItemRemoved(position);
+            Toast.makeText(MainActivity.this, "Album deleted successfully", Toast.LENGTH_SHORT).show();
+        }).addOnFailureListener(e -> {
+            Toast.makeText(MainActivity.this, "Failed to delete album: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
 }

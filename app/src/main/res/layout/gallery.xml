@@ -5,12 +5,25 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@drawable/background">
+    <SearchView
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:iconifiedByDefault="false"
+        android:queryHint="Search albums..."
+        android:background="@drawable/rounded_corners"
+        />
+    <Space
+        android:layout_width="1dp"
+        android:layout_height="10dp"/>
 
     <EditText
         android:id="@+id/albumNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter album name"
+        android:hint=" Enter album name"
+        android:padding="6dp"
+        android:background="@drawable/rounded_corners"
         />
 
     <LinearLayout
@@ -36,6 +49,7 @@
             android:textAllCaps="false"
             />
     </LinearLayout>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/albumsRecyclerView"
