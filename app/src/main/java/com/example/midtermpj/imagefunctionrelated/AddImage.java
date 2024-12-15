@@ -132,7 +132,6 @@ public class AddImage
                 startActivity(intent);
             }
         });
-
     }
 
     @Override
