@@ -2,9 +2,14 @@ package com.example.midtermpj.imagefunctionrelated;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -199,16 +205,21 @@ public class AddImage
                                     uri.remove(Uri.parse(imageUrl));
                                     adapter.notifyDataSetChanged();
                                     textView.setText("Photos(" + uri.size() + ")");
-                                    Toast.makeText(AddImage.this, "Image deleted successfully", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(AddImage.this
+                                            , "Image deleted successfully", Toast.LENGTH_SHORT).show();
                                 }
 
                                 @Override
                                 public void onCancelled(@NonNull DatabaseError error) {
-                                    Toast.makeText(AddImage.this, "Failed to delete image reference: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(AddImage.this
+                                            , "Failed to delete image reference: "
+                                                    + error.getMessage(), Toast.LENGTH_SHORT).show();
                                 }
                             });
                 })
-                .addOnFailureListener(e -> Toast.makeText(AddImage.this, "Failed to delete image from storage: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Toast.makeText(AddImage.this
+                        , "Failed to delete image from storage: "
+                                + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
 
@@ -241,7 +252,8 @@ public class AddImage
                                             albumRef.child("thumbnail")
                                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                                         @Override
-                                                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                        public void onDataChange(
+                                                                @NonNull DataSnapshot snapshot) {
                                                             if (!snapshot.exists() || snapshot
                                                                     .getValue(String.class)
                                                                     .isEmpty()) {
@@ -250,13 +262,15 @@ public class AddImage
 
                                                                 // Notify AlbumsAdapter of the new thumbnail
                                                                 MainActivity.albumsAdapter
-                                                                        .updateThumbnail(albumName, imageUrl);
+                                                                        .updateThumbnail(albumName
+                                                                                , imageUrl);
 
                                                             }
                                                         }
 
                                                         @Override
-                                                        public void onCancelled(@NonNull DatabaseError error) {
+                                                        public void onCancelled(
+                                                                @NonNull DatabaseError error) {
                                                             Toast.makeText(AddImage.this
                                                                     , "Failed to set thumbnail"
                                                                     , Toast.LENGTH_SHORT).show();
@@ -264,7 +278,8 @@ public class AddImage
                                                     });
 
                                         })
-                                        .addOnFailureListener(e -> Toast.makeText(AddImage.this
+                                        .addOnFailureListener(e -> Toast.makeText(
+                                                AddImage.this
                                                 , "Failed to update database: " + e.getMessage()
                                                 , Toast.LENGTH_SHORT).show());
                             }
@@ -360,7 +375,8 @@ public class AddImage
                         if (task.isSuccessful()) {
                             // Add the liked image to the Like Image album
                             likeAlbumRef.child("images").push().setValue(imageUrl);
-                            Toast.makeText(AddImage.this, "Like Image album created", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(AddImage.this, "Like Image album created"
+                                    , Toast.LENGTH_SHORT).show();
                         }
                     });
                 } else {
@@ -371,7 +387,8 @@ public class AddImage
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(AddImage.this, "Failed to access Like Image album: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddImage.this, "Failed to access Like Image album: "
+                        + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -429,5 +446,18 @@ public class AddImage
 
         dialog.show();
     }
+    private void sendNotification(Context context, String message) {
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = "album_update_channel";
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId
+                    , "Album Update"
+                    , NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+
+    }
 }

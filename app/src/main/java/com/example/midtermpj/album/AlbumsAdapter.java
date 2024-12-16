@@ -250,4 +250,5 @@ public class AlbumsAdapter extends RecyclerView.Adapter<AlbumsAdapter.ViewHolder
     public interface OnDeleteClickListener {
         void onDeleteClick(String albumName, int position);
     }
+
 }
