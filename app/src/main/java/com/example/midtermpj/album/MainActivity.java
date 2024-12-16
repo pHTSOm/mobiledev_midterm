@@ -1,6 +1,13 @@
 package com.example.midtermpj.album;
 
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -10,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> filteredAlbums = new ArrayList<>(); // For search results
     DatabaseReference albumRef; // Firebase reference
     boolean isListView = true;
+    private static final String CHANNEL_ID = "album_update_channel";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +91,8 @@ public class MainActivity extends AppCompatActivity {
                 addAlbumToFirebase(albumName); // Add album to Firebase
                 albumNameEditText.setText(""); // Clear input field
             } else {
-                Toast.makeText(MainActivity.this, "Enter album name", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Enter album name"
+                        , Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -110,6 +120,14 @@ public class MainActivity extends AppCompatActivity {
             setRecyclerViewLayoutManager(isListView);
             switchButton.setText(isListView ? "List" : "Grid");
         });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+        createNotificationChannel();
     }
 
     private void setRecyclerViewLayoutManager(boolean isListView) {
@@ -133,12 +151,13 @@ public class MainActivity extends AppCompatActivity {
                 albums.add(albumName);
                 filteredAlbums.add(albumName);
                 albumsAdapter.notifyDataSetChanged();
-                Toast.makeText(MainActivity.this, "Album created", Toast.LENGTH_SHORT).show();
+                sendNotification(MainActivity.this, "Album created: " + albumName);
                 Intent intent = new Intent(MainActivity.this, AddImage.class);
                 intent.putExtra("ALBUM_NAME", albumName);
                 startActivity(intent);
             } else {
-                Toast.makeText(MainActivity.this, "Failed to create album", Toast.LENGTH_SHORT).show();
+                sendNotification(MainActivity.this
+                        , "Failed to create album: " + albumName);
             }
         });
     }
@@ -161,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(MainActivity.this, "Failed to load albums", Toast.LENGTH_SHORT).show();
+                sendNotification(MainActivity.this, "Failed to load albums");
             }
         });
     }
@@ -181,14 +200,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteAlbumFromFirebase(String albumName, int position) {
-        DatabaseReference albumRef = FirebaseDatabase.getInstance().getReference("albums").child(albumName);
+        DatabaseReference albumRef = FirebaseDatabase.getInstance()
+                .getReference("albums")
+                .child(albumName);
         albumRef.removeValue().addOnSuccessListener(aVoid -> {
             albums.remove(position);
             filteredAlbums.remove(albumName);
             albumsAdapter.notifyItemRemoved(position);
-            Toast.makeText(MainActivity.this, "Album deleted successfully", Toast.LENGTH_SHORT).show();
+            sendNotification(MainActivity.this, "Album deleted successfully");
         }).addOnFailureListener(e -> {
-            Toast.makeText(MainActivity.this, "Failed to delete album: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            sendNotification(MainActivity.this, "Failed to delete album: "
+                    + e.getMessage());
         });
     }
+
+    private void sendNotification(Context context, String message) {
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            Log.e("NotificationError", "NotificationManager is null!");
+            return;
+        }
+        Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Album Update")
+                .setContentText(message)
+                .setAutoCancel(true)
+                .build();
+
+        int notificationId = (int) System.currentTimeMillis();
+        notificationManager.notify(notificationId, notification);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = CHANNEL_ID;
+            String channelName = "Album Notifications";
+            String channelDescription = "Notifications for album creation";
+
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(channelDescription);
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
 }
